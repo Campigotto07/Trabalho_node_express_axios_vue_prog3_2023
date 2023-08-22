@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Estudo de caso - Clinica Veterinária</title>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.8/vue.js"></script>      
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" />
+        <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.2/axios.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
+        <link rel="stylesheet" href="../css/estilos.css" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+        <!-- Validations -->
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/vuelidate.min.js"></script>
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/validators.min.js"></script>
+    </head> 
+    <body> 
+       
+        <div class="container-fluid">
+            <h3>Projeto Node+Pg+Express+Axios+Vue</h3>        
+
+             <div class="col-xs-2">
+               <ul class="nav nav-pills nav-stacked">
+                 <li class="active"><a data-toggle="pill" href="#home">Autenticação</a></li>
+                 <li><a data-toggle="pill" href="#menuFornecedor">Fornecedor</a></li>
+                 <li><a data-toggle="pill" href="#menuProduto">Produto</a></li>
+                 <li><a data-toggle="pill" href="#menu4">Sair</a></li>
+                
+               </ul>
+             </div>
+             <div class="col-xs-6">
+               <div class="tab-content" id="app">
+
+                <div id="home" class="tab-pane fade in active" v-if="!form_autenticacao.data_cadastro">
+                    <h3>Autenticacação</h3>
+                         <div class="form-outline mb-4">
+                             <label class="form-label" for="inputACpf">CPF:</label>
+                             <input type="text" v-model="form_autenticacao.cpf" class="form-control" id="inputACpf">
+                          </div>
+                         
+                         <div class="form-outline mb-4">
+                             <label class="form-label"for="inputASenha">Senha:</label>
+                             <input type="password" v-model="form_autenticacao.senha" class="form-control" id="inputASenha">
+                         </div>
+                         
+                         <button @click="autenticarFornecedor" class="btn btn-primary btn-block mb-4" type="button">Autenticar</button>
+                                                   
+                </div>
+                 <div id="menu4" class="tab-pane fade" v-if="form_autenticacao.data_cadastro">
+ 
+                     <button @click="desautenticarFornecedor'" class="btn btn-primary" type="button">Sair</button>
+                 </div>
+
+                <div id="menuFornecedor" class="tab-pane fade"  v-if="form_autenticacao.data_cadastro">
+                    <h2>CRUD de Fornecedor</h2>   
+
+                    <table class="table table-striped" >
+                        <tr>
+                            <!-- 
+                            <th scope="col">Id</th>
+                            -->
+                            <th scope="col">CPF</th>
+                            <th scope="col">IE</th>
+                            <th scope="col">CNPJ</th>
+                                                        
+
+                            <th scope="col">Alterar</th>
+                            <th scope="col">Remover</th>
+                            
+                        </tr>                     
+                        <tbody>
+                            <tr v-for="(f, indice) in fornecedores">   
+                                <td>{{f.cpf}}</td>                                              
+                                <td>{{f.ie}}</td>
+                                <td>{{f.cnpj}}</td>  
+                                                                                          
+                                    <td><button v-on:click="editFornecedor(indice) " class="btn" type="button">Alterar</button></td>
+                                    <td><button v-on:click="remFornecedor(indice, f.cpf) " class="btn" type="button">Remover</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <form id="formularioFornecedor">     
+                        <h3>Formulário para cadastrar e alterar Fornecedor</h3>
+                        <div>
+                            <!-- Input IE -->
+                            <div class="error" v-if="!$v.form_fornecedor.ie.required">IE deve ter no mínimo {{$v.form_fornecedor.ie.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputIe">IE:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.ie.$model" :class="status($v.form_fornecedor.ie)" id="inputFornecedorIe" maxlength="9">
+                            </div>
+
+                           
+                            <!-- Input CNPJ -->
+                            <div class="error" v-if="!$v.form_fornecedor.cnpj.required">CNPJ deve ter no mínimo {{$v.form_fornecedor.cnpj.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputCnpj">CNPJ:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.cnpj.$model" :class="status($v.form_fornecedor.cnpj)" id="inputFornecedorCnpj" maxlength="11" >
+                            </div>
+
+                            <!-- Input CPF -->
+                            <div class="error" v-if="!$v.form_fornecedor.cpf.required">CPF deve ter no mínimo {{$v.form_fornecedor.cpf.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputCpf">CPF:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.cpf.$model" :class="status($v.form_fornecedor.cpf)" id="inputFornecedorCpf" maxlength="11">
+                            </div>
+
+                            <!-- Input Tipo  
+                            <div class="form-group">    
+                                <label for="inputTipo">Tipo:</label>
+                                <input type="text" v-model="form_fornecedor.tipo" class="form-control" id="inputFornecedorTipo" disabled>
+                            </div>
+                            -->
+
+                            <!-- Input RG -->
+                            <div class="error" v-if="!$v.form_fornecedor.rg.required">RG deve ter no mínimo {{$v.form_fornecedor.rg.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputRg">RG:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.rg.$model" :class="status($v.form_fornecedor.rg)" id="inputFornecedorRg" maxlength="8">
+                            </div>
+
+                            <!-- Input Nome -->
+                            <div class="error" v-if="!$v.form_fornecedor.nome.required">Nome deve ter no mínimo {{$v.form_fornecedor.nome.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputNome">Nome:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.nome.$model" :class="status($v.form_fornecedor.nome)" id="inputFornecedorNome">
+                            </div>
+
+                            <!-- Input Número Celular --> 
+                            <div class="error" v-if="!$v.form_fornecedor.numero_celular.required">Número do celular deve ter no mínimo {{$v.form_fornecedor.numero_celular.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputNum_cel">Número Celular:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.numero_celular.$model" :class="status($v.form_fornecedor.numero_celular)" id="inputFornecedorNumCel" maxlength="11">
+                            </div>
+                            
+                            <!-- Input E-mail -->
+                            <div class="error" v-if="!$v.form_fornecedor.email.required">E-mail deve ter no mínimo {{$v.form_fornecedor.email.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputEmail">Email:</label>
+                                <input class="form__label" type="email" v-model.trim="$v.form_fornecedor.email.$model" :class="status($v.form_fornecedor.email)" id="inputFornecedorEmail">
+                            </div>
+
+                            <!-- Dt nascimento -->  
+                            <div class="error" v-if="!$v.form_fornecedor.data_nascimento.required">Informe uma data de nascimento válida (anterior ou igual a data atual) </div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputDt_Nasc">Data de Nascimento:</label>
+                                <input class="form__label" type="date" v-model.trim="$v.form_fornecedor.data_nascimento.$model" :class="status($v.form_fornecedor.data_nascimento)" id="inputFornecedorDataNasc">
+                            </div>                          
+                            
+                            <!-- Dt cadastro 
+                            <div class="error" v-if="!$v.form_fornecedor.data_cadastro.required"> Informe uma data de cadastro válida (anterior ou igual a data atual).</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputDt_cadastro">Data de Cadastro:</label>
+                                <input class="form__label" type="date" v-model.trim="$v.form_fornecedor.data_cadastro.$model" :class="status($v.form_fornecedor.data_cadastro)" id="inputFornecedorDataCadastro">
+                            </div>
+                            --> 
+
+                            <!-- Input CEP -->
+                            <div class="error" v-if="!$v.form_fornecedor.cep.required">CEP deve ter no mínimo {{$v.form_fornecedor.cep.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputCep">CEP:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.cep.$model" :class="status($v.form_fornecedor.cep)" id="inputFornecedorCep" maxlength="8">
+                            </div>
+
+                            <!-- Input Endereço -->
+                            <div class="error" v-if="!$v.form_fornecedor.endereco.required">Endereço deve ter no mínimo {{$v.form_fornecedor.endereco.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputEndereco">Endereço:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.endereco.$model" :class="status($v.form_fornecedor.endereco)" id="inputFornecedorEndereco">
+                            </div>
+
+                            <!-- Input Complemento -->
+                            <div class="error" v-if="!$v.form_fornecedor.complemento.required">Complemento deve ter no mínimo {{$v.form_fornecedor.complemento.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputComplemento">Complemento:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_fornecedor.complemento.$model" :class="status($v.form_fornecedor.complemento)" id="inputFornecedorComplemento">
+                            </div>
+
+                            <!-- Input Senha -->
+                            <div class="error" v-if="!$v.form_fornecedor.senha.required">Senha deve ter no mínimo {{$v.form_fornecedor.senha.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputSenha">Senha:</label>
+                                <input class="form__label" type="password" v-model.trim="$v.form_fornecedor.senha.$model" :class="status($v.form_fornecedor.senha)" id="inputFornecedorSenha">
+                            </div>
+                                   
+                          
+                            <button @click="salvarFornecedor($v)" class="btn btn-primary" type="button">Salvar</button>
+                            <button @click="cleanFormularioFornecedor" class="btn btn-primary" type="button">Limpar</button>                         
+                        </div>                                                                            
+                    </form> 
+                 </div>
+
+
+
+                    <!--  Div PRODUTOS-->
+
+
+                 <div id="menuProduto" class="tab-pane fade "  v-if="form_autenticacao.datacadastro">
+                    <h2>CRUD de Produtos</h2>
+
+                    <table class="table table-striped" >
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Quantidade</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Valor</th>
+                            <th scope="col">Fornecedor</th> 
+                            <th scope="col">Alterar</th>
+                            <th scope="col">Remover</th>
+                        </tr>                     
+                        <tbody>
+                            <tr v-for="(p, indice) in produtos">                                                
+                                    <td>{{p.id}}</td>
+                                    <td>{{p.nome}}</td> 
+                                    <td>{{p.quantidade}}</td>      
+                                    <td>{{p.tipo}}</td>     
+                                    <td>{{p.valor}}</td>
+                                    <td>{{p.fornecedor.nome}}</td>
+                                    <!--
+                                        
+                                        <td>{{f.fornecedores.cpf}}
+                                        
+                                             -->
+                                    <td><button v-on:click="editProduto(indice)" class="btn" type="button">Alterar</button></td>
+                                    <td><button v-on:click=" remProduto(indice, p.nome)" class="btn" type="button">Remover</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <form id="formularioProduto">     
+                        <h3>Formulário para cadastrar e alterar Produto</h3>                   
+                        <div>
+                            <!-- Input ID -->
+                            <div class="form-group">    
+                                <label for="inputId">ID:</label>
+                                <input type="text" v-model="form_produto.id" class="form-control" id="inputProdutoId" disabled>
+                            </div>
+
+                            <!-- Input Nome -->
+                            <div class="error" v-if="!$v.form_produto.nome.required">Nome deve ter no mínimo {{$v.form_produto.nome.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputNome">Nome:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_produto.nome.$model" :class="status($v.form_produto.nome)" id="inputProdutoNome">
+                            </div>
+
+                            <!-- Input Quantidade -->
+                            <div class="error" v-if="!$v.form_produto.quantidade.required">Quantidade deve ter no mínimo {{$v.form_produto.quantidade.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputQuantidade">Quantidade:</label>
+                                <input class="form__label" type="number" v-model.trim="$v.form_produto.quantidade.$model" :class="status($v.form_produto.quantidade)" id="inputProdutoQuantidade">
+                            </div>
+
+                            <!-- Input Tipo -->
+                            <div class="error" v-if="!$v.form_produto.tipo.required">Tipo deve ter no mínimo {{$v.form_produto.tipo.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputTipo">Tipo:</label>
+                                <input class="form__label" type="text" v-model.trim="$v.form_produto.tipo.$model" :class="status($v.form_produto.tipo)" id="inputProdutoTipo">
+                            </div>
+
+                            <!-- Input Valor -->
+                            <div class="error" v-if="!$v.form_produto.valor.required">Valor deve ter no mínimo {{$v.form_produto.valor.$params.minLength.min}} caracteres.</div>
+                            <div class="form-group">
+                                <label for="form__label" for="inputValor">Valor:</label>
+                                <input class="form__label" type="number" v-model.trim="$v.form_produto.valor.$model" :class="status($v.form_produto.valor)" id="inputProdutoValor">
+                            </div>
+                            
+                            
+                            <div class="error" v-if="!$v.form_produto.fornecedor.required"> Selecione pelo menos um fornecedor</div>
+                            <div class="form-group">
+                                <label class="form__label" for="selectProduto">Escolha o Fornecedor:</label>
+                                <select class="select"  v-model="$v.form_produto.fornecedor.$model" :class="status($v.form_produto.fornecedor)" id="selectProduto">                                
+                                    <option v-for="f in fornecedores" v-bind:value="f">
+                                        {{ f.nome }}
+                                    </option>
+                                </select>
+                                
+                            </div> 
+                            
+                            
+                            
+                                
+                            
+                                         
+                          
+                          <button @click="salvarProduto($v) " class="btn btn-primary" type="button">Salvar</button>
+                          <button @click="cleanFormularioProduto" class="btn btn-primary" type="button">Limpar</button>                         
+                        </div>                                                                            
+                    </form> 
+
+                    
+                 </div>
+               </div>
+
+             </div>
+
+           </div>
+         </div>
+
+    </body>
+    <script type="text/javascript">
+
+$(document).ready(function() {
+
+var fornecedores = [];
+
+var produtos = [];
+
+
+
+var dados = {"fornecedores": fornecedores,
+              "form_autenticacao" : {
+                                      cpf: '',
+                                      senha: '',
+                                      data_cadastro: '', 
+              },    
+              'form_fornecedor': {
+                 tipo: '',
+                 cpf: '',
+                 cep: '',
+                 complemento: '',
+                 data_cadastro: '',
+                 data_nascimento: '',
+                 email: '',
+                 endereco: '',
+                 nome: '',
+                 numero_celular: '',
+                 rg: '',
+                 senha: '',
+                 ie: '',
+                 cnpj: '',
+
+              },
+              "produtos": produtos,
+               "form_produto" : {
+                  id: '',
+                  nome: '',
+                  quantidade: '',
+                  tipo: '',
+                  valor: '',
+                  fornecedor: [],
+                  
+               }
+          };
+  
+ Vue.use(window.vuelidate.default);
+
+  const{
+      required,
+      minLength,
+      minValue,
+      between
+  } = window.validators
+  
+
+Vue.filter('formataData', function (value) {                
+          //yyyy-mm-dd
+          var data = new Date(value);
+          data.setDate(data.getDate()+1); //incrementa a data em um dia para mostrar corretamente (pode nao ser necessário)              
+          dia  = (data.getDate()).toString().padStart(2, '0'),
+          mes  = (data.getMonth()+1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.                
+          ano  = data.getFullYear();                
+          return dia+"/"+mes+"/"+ano;                
+  })  
+  
+Vue.prototype.$http = axios;
+
+// Vue fornecedores
+new Vue({ 
+          el: '#menuFornecedor', 
+          data: dados,
+          validations: {
+              form_fornecedor: {
+                  /*
+                  tipo: {
+                      required,
+                      minLength: minLength(1)
+                  }, */
+                  cpf: {
+                      required,
+                      minLength: minLength(11)
+                  },
+                  cep: {
+                      required,
+                      minLength: minLength(8),
+                      
+                  },
+                  complemento: {
+                      required, 
+                      minLength: minLength(1)
+                  },
+                  /*
+                  data_cadastro: {
+                      required,
+                      minLength: value => value < new Date().toISOString()
+                  },
+                  */
+                  data_nascimento: {
+                      required,
+                      minLength: value => value < new Date().toISOString()
+                  },
+                  email: {
+                      required,
+                      minLength: minLength(1)
+                  },
+                  endereco: {
+                      required, 
+                      minLength: minLength(1)
+                  },
+                  nome: {
+                      required,
+                      minLength: minLength(1)
+                  },
+                  numero_celular: {
+                      required,
+                      minLength: minLength(11),
+                      maxLength: 11,
+                      
+                  },
+                  rg: {
+                      required,
+                      minLength: minLength(8)
+                  },
+                  senha: {
+                      required,
+                      minLength: minLength(1)
+                  },
+                  ie: {
+                      required,
+                      minLength: minLength(9)
+                  },
+                  cnpj: {
+                      required,
+                      minLength: minLength(11)
+                  }
+              }
+
+          },
+          methods: { 
+
+              status(validation) {
+                  return {
+                      error: validation.$error,
+                      dirty: validation.$dirty
+                  }
+              },
+
+
+              salvarFornecedor: function (v) {
+                  var fornecedor = jQuery.extend({},this.form_fornecedor); //clona o formulário fornecedor e coloca na variável fornecedor. Limpar o form não afeta esta variável
+                  if (!v.$invalid) {
+                     
+                      if(fornecedor.tipo == undefined || fornecedor.tipo.length == 0){
+                          fornecedor.tipo = "Fo";
+                          //realiza um insert
+                          console.log(fornecedor);
+                          this.$http.post('http://localhost:4000/insertfornecedor', fornecedor
+                              )
+                          .then(response => { 	
+
+                                      this.fornecedores.push(response.data)
+
+                                      alert("Inseriu o fornecedor " + response.data.cpf + " com sucesso !!!");
+
+                              })
+                          .catch(error => {                                     
+                              alert('Erro ao inserir a fornecedor: '+error.response.nome);
+                          });
+
+                      }else{
+                          alert(fornecedor.cpf)
+                          
+
+                          this.$http.post('http://localhost:4000/updatefornecedor', fornecedor
+                              )
+                          .then(response => { 	
+                                                                                                                  
+                                  Vue.set(this.fornecedores, fornecedor.indice, response.data);
+
+                                  alert('Alterou a fornecedor '+response.data.cpf);
+                              })
+                          .catch(error => {                                     
+                              alert('Erro ao alterar fornecedor: '+error);
+                          });
+
+                          this.cleanFormularioFornecedor();
+                                            
+
+                          
+                      }
+                      this.cleanFormularioFornecedor();
+                                            
+                 
+                  }else{
+
+                      alert("Preencha formulario de Fornecedor !!!");
+                  }
+              },
+
+
+              remFornecedor: function(param_index, param_id){
+                  
+                      var decisao = confirm('Deseja realmente remover o fornecedor ' + param_id + ' ?');
+                      if(decisao){
+                          
+                              this.$http.get('http://localhost:4000/deletefornecedor/' + this.fornecedores[param_index].cpf )
+
+                                  .then(response => {
+
+                                      //documentacao sobre o splice
+                                      //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
+                                      //remove 1 elemento do índice definido pela variavel param_index
+                                      this.fornecedores.splice(param_index, 1);
+
+                                      alert('Removeu com sucesso a fornecedor ' + response.data.cpf);
+
+                                      })
+                                  .catch(error => {
+                                          // error callback                                        
+                                          alert('Erro ao remover a forncedor '+ param_id +': ' + error);
+                                          console.log(error);
+                                  });	
+
+                      }else{
+                          alert('fornecedor não removido !!!');
+                      }
+
+              }, 
+              
+
+              editFornecedor: function(param_index) {
+                  //alert("chegou ate aqui")
+                  this.form_fornecedor.indice = param_index;
+                  this.form_fornecedor.cpf = this.fornecedores[param_index].cpf;
+                  this.form_fornecedor.cep = this.fornecedores[param_index].cep;
+                  this.form_fornecedor.complemento = this.fornecedores[param_index].complemento;
+                  this.form_fornecedor.data_nascimento = this.fornecedores[param_index].data_nascimento;
+                  this.form_fornecedor.data_cadastro = this.fornecedores[param_index].data_cadastro;
+                  this.form_fornecedor.email = this.fornecedores[param_index].email
+                  this.form_fornecedor.endereco = this.fornecedores[param_index].endereco;
+                  this.form_fornecedor.nome = this.fornecedores[param_index].nome;
+                  this.form_fornecedor.numero_celular = this.fornecedores[param_index].numero_celular;
+                  this.form_fornecedor.rg = this.fornecedores[param_index].rg;
+                  this.form_fornecedor.senha = this.fornecedores[param_index].senha;
+                  this.form_fornecedor.cnpj = this.fornecedores[param_index].cnpj;
+                  this.form_fornecedor.ie = this.fornecedores[param_index].ie;
+                  this.form_fornecedor.tipo = this.fornecedores[param_index].tipo;
+
+              },
+
+              cleanFormularioFornecedor: function () {
+                  this.form_fornecedor.indice = '';
+                  this.form_fornecedor.cpf = '';
+                  this.form_fornecedor.cep = '';
+                  this.form_fornecedor.complemento = '';
+                  this.form_fornecedor.data_nascimento = '';
+                  //this.form_fornecedor.data_cadastro = '';
+                  this.form_fornecedor.email = '';
+                  this.form_fornecedor.endereco = '';
+                  this.form_fornecedor.nome = '';
+                  this.form_fornecedor.numero_celular = '';
+                  this.form_fornecedor.rg = '';
+                  this.form_fornecedor.senha = '';
+                  this.form_fornecedor.cnpj = '';
+                  this.form_fornecedor.ie = '';
+                  this.form_fornecedor.tipo = '';
+              },
+              
+          },
+          created: function(){
+              //console.log(fornecedores);
+              this.$http.get('http://localhost:4000/listfornecedor')                                        
+              .then(response => {
+
+                  for(let f of response.data){
+
+                      this.fornecedores.push({cpf: f.cpf, 
+                                          tipo: f.tipo,
+                                          rg: f.rg,
+                                          nome: f.nome,
+                                          numero_celular: f.numero_celular,
+                                          email: f.email,
+                                          data_nascimento: f.data_nascimento,
+                                          data_cadastro: f.data_cadastro,
+                                          cep: f.cep,
+                                          endereco: f.endereco,
+                                          complemento: f.complemento,
+                                          cnpj: f.cnpj,
+                                          ie: f.ie,
+                                          senha: f.senha,
+                                          }
+                                      );
+
+                  }
+              
+              }).catch(response => {
+                  console.log(response);
+              });
+      
+          }
+  }); 
+
+
+// Vue Produtos
+new Vue({ 
+el: '#menuProduto', 
+data: dados,
+validations: {
+  form_produto: {
+      nome: {
+          required,
+          minLength: minLength(1)
+      },
+      quantidade: {
+          required,
+          minLength: minLength(1)
+      },
+      tipo: {
+          required,
+          minLength: minLength(1)
+      },
+      valor: {
+          required,
+          minLength: minLength(1)
+      },
+      fornecedor: {
+          required,
+      } 
+                 
+                 
+  }
+                  
+  },
+
+  methods: {     
+
+      status(validation) {
+          return {
+              error: validation.$error,
+              dirty: validation.$dirty
+          }
+      },
+
+
+      salvarProduto: function (v) {
+          var produto = jQuery.extend({},this.form_produto); //clona o formulário produto e coloca na variável produto. Limpar o form não afeta esta variável
+          if (!v.$invalid) {
+              if(isNaN(parseInt(produto.id))){
+                  //realiza um insert
+                  this.$http.post('http://localhost:4000/insertproduto', produto
+                  )
+                  .then(response => { 	
+
+                  this.produtos.push(response.data)
+
+                  alert("Inseriu o produto " + response.data.id + " com sucesso !!!");
+
+                  })
+                  .catch(error => {   
+                      console.log(produto);                                  
+                      alert('Erro ao inserir a produto: ' + produto.nome);
+                      console.log("erro ao inserir o produto");
+                  });
+
+              }else{
+                  
+                  
+                  this.$http.post('http://localhost:4000/updateproduto', produto
+                      )
+                  .then(response => { 	
+                                                                                                          
+                          Vue.set(this.produtos, produto.indice, response.data);
+
+                          alert('Alterou o Produto ' + response.data.id);
+                      })
+                  .catch(error => {                                     
+                      alert('Erro ao alterar Produto: ' + error);
+                  });	
+
+                  
+              }
+              this.cleanFormularioProduto();                            
+                  
+          }else{
+              alert("Preencha formulario de Produto !!!");
+          }
+      },
+
+      
+      remProduto: function(param_index, param_id){
+          var decisao = confirm('Deseja realmente remover o produto ' + param_id + ' ?');
+          if(decisao){         
+              this.$http.get('http://localhost:4000/deleteproduto/' + this.produtos[param_index].nome )
+
+              .then(response => {
+                  //documentacao sobre o splice
+                  //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
+                  //remove 1 elemento do índice definido pela variavel param_index
+                  this.produtos.splice(param_index, 1);
+                  alert('Removeu com sucesso o produto ' + response.data.nome);
+              })
+              .catch(error => {
+                  // error callback                                        
+                  alert('Erro ao remover a produto '+ param_id +': ' + error);
+                  console.log(error);
+              });	
+
+          }else{
+              alert('Produto não removido !!!');
+          }
+
+      }, 
+
+      editProduto: function(param_index) {
+          this.form_produto.indice = param_index;
+          this.form_produto.id = this.produtos[param_index].id;
+          this.form_produto.nome = this.produtos[param_index].nome;
+          this.form_produto.quantidade = this.produtos[param_index].quantidade;
+          this.form_produto.tipo = this.produtos[param_index].tipo;
+          this.form_produto.valor = this.produtos[param_index].valor;
+          this.form_produto.fornecedores = this.produtos[param_index].fornecedores;
+
+      },
+
+
+      cleanFormularioProduto: function () {
+          this.form_produto.indice = '';
+          this.form_produto.id = '';
+          this.form_produto.nome = '';
+          this.form_produto.quantidade = '';
+          this.form_produto.tipo = '';
+          this.form_produto.valor = '';
+          this.form_produto.fornecedor = '';
+          
+      },
+      
+      
+  },
+      created: function(){
+          console.log(produtos);
+          
+          this.$http.get('http://localhost:4000/listproduto')                                        
+              .then(response => {
+                  for(let p of response.data){
+                      this.produtos.push({
+                          id: p.id, 
+                          nome: p.nome,
+                          quantidade: p.quantidade,
+                          tipo: p.tipo,
+                          valor: p.valor,
+                          fornecedor_cpf: p.fornecedor_cpf,
+                          fornecedor: {
+                              cpf: p.fornecedor_cpf, 
+                              rg: p.rg,
+                              nome: p.nome,
+                              numero_celular: p.numero_celular,
+                              email: p.email,
+                              data_nascimento: p.data_nascimento,
+                              data_cadastro: p.data_cadastro,
+                              cep: p.cep,
+                              endereco: p.endereco,
+                              complemento: p.complemento,
+                              cnpj: p.cnpj,
+                              ie: p.ie,
+                              senha: p.senha,        
+                          }
+                      });
+
+                  }
+              
+              }).catch(response => {
+              console.log(response);
+              });
+      }
+}); 
+
+    new Vue({ 
+    el: '#home', 
+    data: dados,
+    methods: {
+        autenticarFornecedor: function (){
+            alert("Entrou no Autentica")
+            var fornecedor = jQuery.extend({}, this.form_autenticacao);//clona o this.novo_jogador e armazena na variavel jogador. dessa forma alteracoes em this.novo_jogador nao irao refletir em jogador.
+            
+            if (fornecedor.cpf.trim().length > 0 && fornecedor.senha.trim().length > 0) {
+
+                this.$http.post('http://localhost:4000/loginfornecedor', fornecedor
+                        )
+                    .then(response => { 	
+                            
+                            if(response.status == 201){
+
+                                alert("Fornecedor " + response.data.cpf + " autenticado com sucesso !!!");
+
+                                this.form_autenticacao.data_cadastro =  response.data.data_cadastro;
+
+                                
+                            }else if (response.status == 204){
+
+                                alert("Não localizou  cpf e/ou senha !!!");
+                            }else{
+                                alert("Erro ao autenticar !!");
+                            }
+                        })
+                    .catch(error => {                                     
+                        alert('Erro no loginfornecedor: '+error.response.data);
+                    });
+
+            }else{
+                alert("Informe cpf e senha para autenticar !");
+            }
+            
+
+        },
+        desautenticarFornecedor: function () {
+
+            this.form_autenticacao.cpf = ''; 
+            this.form_autenticacao.senha = '';
+            this.form_autenticacao.data_cadastro =  '';
+        },
+
+    }                                     
+    });
+
+});
+    </script>
+</html>

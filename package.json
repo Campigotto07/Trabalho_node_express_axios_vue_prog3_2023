@@ -1,0 +1,30 @@
+{
+  "name": "trabalho_prog_node_cv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "servidor_cv_trabalho.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Campigotto07/node_cv_api_2023.git"
+  },
+  "keywords": [
+    "api",
+    "node",
+    "javascript",
+    "express",
+    "pg"
+  ],
+  "author": "Gabriel Lauer Campigotto",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Campigotto07/node_cv_api_2023/issues"
+  },
+  "homepage": "https://github.com/Campigotto07/node_cv_api_2023#readme",
+  "dependencies": {
+    "express": "^4.17.3",
+    "pg": "^8.7.3"
+  }
+}

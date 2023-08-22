@@ -1,0 +1,35 @@
+input {
+    border: 1px solid silver;
+    border-radius: 4px;
+    background: white;
+    padding: 5px 10px;
+  }
+  
+  .dirty {
+    border-color: #5A5;
+    background: #EFE;
+  }
+  
+  .dirty:focus {
+    outline-color: #8E8;
+  }
+  
+  .error {
+    border-color: red;
+    background: #FDD;
+  }
+  
+  .error:focus {
+    outline-color: #F99;
+  }
+
+  .select{
+    width: 15em;
+    height: 2.2em;
+    font-size: 12pts;
+    border-radius: 0.2em;
+    padding: 0.5em;
+    /* 
+    border-color: rgb(182, 181, 181); 
+    */
+  }
